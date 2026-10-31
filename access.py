@@ -76,7 +76,7 @@ async def build_access_message(bot, course: Course) -> str:
     """Текст с доступом в закрытую группу. Если бот — админ группы (private_chat_id),
     генерит ОДНОРАЗОВУЮ инвайт-ссылку (member_limit=1, переслать бесполезно),
     иначе отдаёт статичную ссылку private_access."""
-    lines = ["🔐 Ёпиқ гуруҳ / Закрытая группа:"]
+    lines = ["🔐 Yopiq guruh:"]
     link = None
     if course.private_chat_id:
         try:
@@ -88,13 +88,13 @@ async def build_access_message(bot, course: Course) -> str:
             logger.warning("Не смог создать одноразовую ссылку для %s: %r", course.key, e)
     if link:
         lines.append(link)
-        lines.append("(бир martalik havola — faqat siz uchun / одноразовая ссылка)")
+        lines.append("(bir martalik havola — faqat siz uchun)")
     elif course.private_access:
         lines.append(course.private_access)
     else:
-        lines.append("ҳаволани Насиба юборади.")
+        lines.append("havolani Nasiba o'zi yuboradi.")
     if course.start_date:
-        lines.append(f"Старт: {course.start_date.isoformat()}")
+        lines.append(f"Boshlanishi: {course.start_date.isoformat()}")
     else:
-        lines.append("Дарслар доимий — исталган вақтда бошлашингиз мумкин 🙌")
+        lines.append("Darslar doimiy — istalgan vaqtda boshlashingiz mumkin 🙌")
     return "\n".join(lines)

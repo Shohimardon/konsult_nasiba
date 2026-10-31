@@ -26,30 +26,22 @@ logger = logging.getLogger(__name__)
 
 router = Router(name="business")
 
-# Короткий нейтральный ack на чек (НЕ подтверждение оплаты) на 3 языках.
-RECEIPT_ACK = "Rahmat! Chekni oldik, tez orada tasdiqlaymiz 🙏\n(Чек получили, скоро подтвердим)"
+# Короткий нейтральный ack на чек (НЕ подтверждение оплаты).
+RECEIPT_ACK = "Rahmat! Chekni oldik, tez orada tasdiqlaymiz 🙏"
 
 # Вежливый ответ на вопрос НЕ по теме курсов: бот — помощница устоза, Насиба ответит сама.
-ASSISTANT_DEFER = {
-    "uz_cyrl": "Мен Насиба устознинг ёрдамчисиман 🙂 Асосан курслар бўйича ёрдам бераман. "
-               "Бу савол бўйича устознинг ўзи сизга тез орада жавоб беради 🙏",
-    "uz_latn": "Men Nasiba ustozning yordamchisiman 🙂 Asosan kurslar bo'yicha yordam beraman. "
-               "Bu savol bo'yicha ustozning o'zi sizga tez orada javob beradi 🙏",
-    "ru": "Я помощница устоза Насибы 🙂 Помогаю в основном по курсам. На этот вопрос Насиба "
-          "ответит вам сама — скоро напишет 🙏",
-}
-
-
-def _assistant_defer(lang: str) -> str:
-    return ASSISTANT_DEFER.get(lang, ASSISTANT_DEFER["uz_cyrl"])
+ASSISTANT_DEFER = (
+    "Men Nasiba ustozning yordamchisiman 🙂 Asosan kurslar bo'yicha yordam beraman. "
+    "Bu savol bo'yicha ustozning o'zi sizga tez orada javob beradi 🙏"
+)
 
 _VERDICT = {
-    ReceiptStatus.clean.value: "✅ ЧИСТО — карта и сумма совпали, дублей нет",
-    ReceiptStatus.duplicate.value: "🚨 ДУБЛЬ — такой чек уже присылали! Возможно жульничество",
-    ReceiptStatus.wrong_card.value: "⚠️ НЕ ТА КАРТА — получатель не из твоих карт",
-    ReceiptStatus.wrong_amount.value: "⚠️ СУММА НЕ СОВПАЛА — не равна цене ни одного курса (недоплата?)",
-    ReceiptStatus.unreadable.value: "❓ НЕ ПОХОЖЕ НА ЧЕК — не смог распознать",
-    ReceiptStatus.pending.value: "⏳ На проверке",
+    ReceiptStatus.clean.value: "✅ TOZA — karta va summa mos keldi, dubl yo'q",
+    ReceiptStatus.duplicate.value: "🚨 DUBL — bu chek allaqachon yuborilgan! Firibgarlik bo'lishi mumkin",
+    ReceiptStatus.wrong_card.value: "⚠️ KARTA NOTO'G'RI — qabul qiluvchi sizning kartalaringizdan emas",
+    ReceiptStatus.wrong_amount.value: "⚠️ SUMMA MOS EMAS — hech bir kurs narxiga teng emas (kam to'langan?)",
+    ReceiptStatus.unreadable.value: "❓ CHEKKA O'XSHAMAYDI — o'qiy olmadim",
+    ReceiptStatus.pending.value: "⏳ Tekshiruvda",
 }
 
 
@@ -65,13 +57,13 @@ async def on_business_connection(event: BusinessConnection, bot: Bot) -> None:
             await session.commit()
             await bot.send_message(
                 settings.nasiba_chat_id,
-                "✅ Подключение к твоей личке активно. Я на связи — буду отвечать "
-                "педагогам и проверять чеки.",
+                "✅ Lichkangizga ulanish faol. Men aloqadaman — pedagoglarga javob beraman "
+                "va cheklarni tekshiraman.",
             )
         else:
             await bot.send_message(
                 settings.nasiba_chat_id,
-                "⚠️ Подключение к личке отключено. Пока не смогу отвечать педагогам.",
+                "⚠️ Lichkaga ulanish o'chirildi. Hozircha pedagoglarga javob bera olmayman.",
             )
 
 
@@ -95,7 +87,7 @@ async def on_business_message(message: Message, bot: Bot) -> None:
             except Exception as e:  # noqa: BLE001
                 await bot.send_message(
                     settings.nasiba_chat_id,
-                    f"❗️ Пришёл чек от {_who(lead)}, но не смог его прочитать ({e!r}). Глянь сама.",
+                    f"❗️ {_who(lead)} dan chek keldi, lekin o'qiy olmadim ({e!r}). O'zingiz qarang.",
                 )
                 await session.commit()
                 return
@@ -135,16 +127,16 @@ async def on_business_message(message: Message, bot: Bot) -> None:
             status, course = await access.redeem(session, ac, message.from_user.id)
             if status == "foreign":
                 await message.answer(
-                    "Бу код сизга тегишли эмас 🚫 Илтимос, ўзингиз тўлаб, шахсий код олинг "
-                    "ёки Насиба билан боғланинг."
+                    "Bu kod sizga tegishli emas 🚫 Iltimos, o'zingiz to'lab, shaxsiy kod oling "
+                    "yoki Nasiba bilan bog'laning."
                 )
                 await bot.send_message(
                     settings.nasiba_chat_id,
-                    f"🚨 Код {ac.code} выдан другому педагогу, а его прислал {_who(lead)}. "
-                    f"Похоже, кто-то передал свой код (попыток: {ac.share_attempts}).",
+                    f"🚨 {ac.code} kodi boshqa pedagogga berilgan edi, uni {_who(lead)} yubordi. "
+                    f"Kimdir o'z kodini bergan ko'rinadi (urinishlar: {ac.share_attempts}).",
                 )
             elif course is None:
-                await message.answer("Доступ активирован, но направление не найдено — Насиба свяжется с вами.")
+                await message.answer("Kirish faollashtirildi, lekin yo'nalish topilmadi — Nasiba siz bilan bog'lanadi.")
             else:
                 await message.answer(await access.build_access_message(bot, course))
             await session.commit()
@@ -156,7 +148,7 @@ async def on_business_message(message: Message, bot: Bot) -> None:
         except Exception as e:  # noqa: BLE001
             await bot.send_message(
                 settings.nasiba_chat_id,
-                f"❗️ Вопрос от {_who(lead)}: «{text[:300]}» — не смог обработать ({e!r}). Ответь сама.",
+                f"❗️ {_who(lead)} dan savol: «{text[:300]}» — qayta ishlay olmadim ({e!r}). O'zingiz javob bering.",
             )
             await session.commit()
             return
@@ -167,12 +159,12 @@ async def on_business_message(message: Message, bot: Bot) -> None:
 
         # Вопрос НЕ по теме курсов — вежливо отвечаем как помощница, зовём Насибу ответить самой.
         if res.get("out_of_scope"):
-            await message.answer(_assistant_defer(lead.lang))
+            await message.answer(ASSISTANT_DEFER)
             await bot.send_message(
                 settings.nasiba_chat_id,
-                f"🙋 Вопрос НЕ по курсам от {_who(lead)}:\n«{text[:400]}»\n\n"
-                "Я вежливо ответил, что это не моя тема и что ты напишешь сама. "
-                "Ответь ей, пожалуйста 🙏",
+                f"🙋 {_who(lead)} dan kurslarga OID BO'LMAGAN savol:\n«{text[:400]}»\n\n"
+                "Men bu mening mavzuyim emasligini va o'zingiz yozishingizni muloyim aytdim. "
+                "Iltimos, unga javob bering 🙏",
             )
             await session.commit()
             return
@@ -185,15 +177,15 @@ async def on_business_message(message: Message, bot: Bot) -> None:
                 lead_id=lead.id,
                 customer_chat_id=message.chat.id,
                 business_connection_id=bcid,
-                draft_text=draft or "(ИИ не смог сформулировать — ответь сама)",
+                draft_text=draft or "(AI matn tuza olmadi — o'zingiz javob bering)",
                 kind="manual",
             )
             session.add(reply)
             await session.flush()
             await bot.send_message(
                 settings.nasiba_chat_id,
-                f"🙋 Вопрос от {_who(lead)} требует тебя:\n\n«{text[:400]}»\n\n"
-                f"Мой черновик:\n{reply.draft_text}",
+                f"🙋 {_who(lead)} dan savol sizni talab qiladi:\n\n«{text[:400]}»\n\n"
+                f"Mening qoralamam:\n{reply.draft_text}",
                 reply_markup=reply_approval_kb(reply.id),
             )
             await session.commit()
@@ -249,7 +241,7 @@ async def _extract_text(message: Message, bot: Bot) -> str:
 
 def _who(lead) -> str:
     uname = f" (@{lead.username})" if lead.username else ""
-    return f"{lead.name or 'педагог'}{uname}"
+    return f"{lead.name or 'pedagog'}{uname}"
 
 
 async def _archive_receipt(bot, session, receipt, lead, file_bytes: bytes, media_type: str) -> None:
@@ -272,46 +264,46 @@ async def _archive_receipt(bot, session, receipt, lead, file_bytes: bytes, media
 
 
 def _archive_caption(receipt, lead) -> str:
-    amount = f"{receipt.amount:,}".replace(",", " ") + " сум" if receipt.amount else "—"
+    amount = f"{receipt.amount:,}".replace(",", " ") + " so'm" if receipt.amount else "—"
     uname = f"@{lead.username}" if lead.username else "—"
     return (
-        f"💳 ЧЕК В АРХИВ\n"
-        f"Педагог: {lead.name or '—'}\n"
+        f"💳 CHEK ARXIVGA\n"
+        f"Pedagog: {lead.name or '—'}\n"
         f"Username: {uname}\n"
         f"Telegram ID: {lead.tg_user_id}\n"
-        f"Вердикт: {_VERDICT.get(receipt.status, receipt.status)}\n"
-        f"Сумма: {amount}\n"
-        f"Курс: {receipt.course_key or '—'}\n"
-        f"Карта: ***{receipt.card_last4 or '—'}\n"
-        f"Транзакция: {receipt.txn_id or '—'}\n"
-        f"Когда платил: {receipt.paid_at or '—'}\n"
-        f"Плательщик (в чеке): {receipt.payer_name or '—'}"
+        f"Xulosa: {_VERDICT.get(receipt.status, receipt.status)}\n"
+        f"Summa: {amount}\n"
+        f"Kurs: {receipt.course_key or '—'}\n"
+        f"Karta: ***{receipt.card_last4 or '—'}\n"
+        f"Tranzaksiya: {receipt.txn_id or '—'}\n"
+        f"Qachon to'langan: {receipt.paid_at or '—'}\n"
+        f"To'lovchi (chekda): {receipt.payer_name or '—'}"
     )
 
 
 def _receipt_card(receipt, lead, draft: str) -> str:
-    amount = f"{receipt.amount:,}".replace(",", " ") + " сум" if receipt.amount else "—"
-    course = f"\nНаправление (по сумме): {receipt.course_key}" if receipt.course_key else ""
+    amount = f"{receipt.amount:,}".replace(",", " ") + " so'm" if receipt.amount else "—"
+    course = f"\nYo'nalish (summa bo'yicha): {receipt.course_key}" if receipt.course_key else ""
     return (
-        f"💳 Чек от {_who(lead)}\n\n"
-        f"Вердикт: {_VERDICT.get(receipt.status, receipt.status)}\n"
-        f"Сумма: {amount}{course}\n"
-        f"Карта: ***{receipt.card_last4 or '—'}\n"
-        f"Транзакция: {receipt.txn_id or '—'}\n"
-        f"Когда: {receipt.paid_at or '—'}\n"
-        f"Плательщик: {receipt.payer_name or '—'}\n\n"
-        f"Если подтвердишь — отправлю педагогу:\n«{draft}»"
+        f"💳 {_who(lead)} dan chek\n\n"
+        f"Xulosa: {_VERDICT.get(receipt.status, receipt.status)}\n"
+        f"Summa: {amount}{course}\n"
+        f"Karta: ***{receipt.card_last4 or '—'}\n"
+        f"Tranzaksiya: {receipt.txn_id or '—'}\n"
+        f"Qachon: {receipt.paid_at or '—'}\n"
+        f"To'lovchi: {receipt.payer_name or '—'}\n\n"
+        f"Tasdiqlasangiz — pedagogga yuboraman:\n«{draft}»"
     )
 
 
 def _receipt_draft(status: str, lang: str) -> str:
     """Черновик ответа педагогу по итогу проверки (Насиба может изменить)."""
     if status == ReceiptStatus.clean.value:
-        return "Раҳмат! Тўловингиз қабул қилинди ✅ Ҳозир шахсий кирик кодингизни юбораман 🙏"
+        return "Rahmat! To'lovingiz qabul qilindi ✅ Hozir shaxsiy kirish kodingizni yuboraman 🙏"
     if status == ReceiptStatus.duplicate.value:
-        return "Кечирасиз, бу чек аллақачон ишлатилган. Илтимос, ўзингизнинг тўловингиз чекини юборинг."
+        return "Kechirasiz, bu chek allaqachon ishlatilgan. Iltimos, o'zingizning to'lov chekingizni yuboring."
     if status == ReceiptStatus.wrong_card.value:
-        return "Тўлов бошқа картага кетибди. Илтимос, тўғри реквизитларга қайта тўланг."
+        return "To'lov boshqa kartaga tushibdi. Iltimos, to'g'ri rekvizitlarga qayta to'lang."
     if status == ReceiptStatus.wrong_amount.value:
-        return "Тўлов суммаси курс нархига тўғри келмади. Илтимос, суммани текшириб, тўлиқ тўланг ёки чекни қайта юборинг."
-    return "Раҳмат, чекни кўриб чиқамиз."
+        return "To'lov summasi kurs narxiga to'g'ri kelmadi. Iltimos, summani tekshirib, to'liq to'lang yoki chekni qayta yuboring."
+    return "Rahmat, chekni ko'rib chiqamiz."

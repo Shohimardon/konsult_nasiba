@@ -7,10 +7,10 @@ def reply_approval_kb(reply_id: int) -> InlineKeyboardMarkup:
     """Кнопки под черновиком ответа педагогу (гибридный режим)."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Отправить", callback_data=f"reply:send:{reply_id}"),
-            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"reply:edit:{reply_id}"),
+            InlineKeyboardButton(text="✅ Yuborish", callback_data=f"reply:send:{reply_id}"),
+            InlineKeyboardButton(text="✏️ O'zgartirish", callback_data=f"reply:edit:{reply_id}"),
         ],
-        [InlineKeyboardButton(text="🗑 Не отвечать", callback_data=f"reply:skip:{reply_id}")],
+        [InlineKeyboardButton(text="🗑 Javob bermaslik", callback_data=f"reply:skip:{reply_id}")],
     ])
 
 
@@ -18,8 +18,8 @@ def receipt_approval_kb(reply_id: int) -> InlineKeyboardMarkup:
     """Кнопки под чеком: подтвердить/отклонить оплату."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Подтвердить оплату", callback_data=f"reply:send:{reply_id}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"reply:skip:{reply_id}"),
+            InlineKeyboardButton(text="✅ To'lovni tasdiqlash", callback_data=f"reply:send:{reply_id}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reply:skip:{reply_id}"),
         ],
-        [InlineKeyboardButton(text="✏️ Ответить по-своему", callback_data=f"reply:edit:{reply_id}")],
+        [InlineKeyboardButton(text="✏️ O'zim javob yozaman", callback_data=f"reply:edit:{reply_id}")],
     ])

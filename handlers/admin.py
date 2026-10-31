@@ -33,36 +33,36 @@ def _is_admin(message: Message) -> bool:
 @router.message(Command("id", "whoami"))
 async def cmd_id(message: Message) -> None:
     """Открыто всем — помогает узнать Telegram ID (для настройки NASIBA_CHAT_ID)."""
-    await message.answer(f"Твой Telegram ID: `{message.from_user.id}`", parse_mode="Markdown")
+    await message.answer(f"Sizning Telegram ID: `{message.from_user.id}`", parse_mode="Markdown")
 
 
 @router.message(Command("start"))
 async def cmd_start(message: Message) -> None:
     if not _is_admin(message):
         # Если боту в НОРМАЛЬНЫЙ чат пишет педагог — вежливо направим в личку Насибы.
-        await message.answer("Ассалому алейкум! Насибага ёзинг, мен ёрдам бераман 🙏")
+        await message.answer("Assalomu alaykum! Nasibaga yozing, men yordam beraman 🙏")
         return
     await message.answer(
-        "Привет! Я на связи 🤝\n\n"
-        "Что я делаю на твоей личке:\n"
-        "• отвечаю педагогам на вопросы про курсы;\n"
-        "• принимаю чеки и проверяю их (дубли, чужие карты, сумма);\n"
-        "• спорное и оплату показываю тебе на подтверждение.\n\n"
-        "⚡️ Быстрая настройка курса Milliy (по одной команде):\n"
-        "/setupmilliy — создать курс Milliy (начальные классы)\n"
-        "/setprice milliy 300000 — цена\n"
-        "/setchannel milliy https://t.me/... — открытый канал\n"
-        "/setstart milliy 2026-11-15 — дата старта (секрет)\n"
-        "/bindgroup milliy — привязать закрытую группу (внутри группы)\n\n"
-        "Остальное:\n"
-        "/courses — курсы (цены, даты)\n"
-        "/addcourse — добавить курс вручную (мастер)\n"
-        "/requisites — задать реквизиты для оплаты\n"
-        "/bindreceipts — собирать все чеки в группу-архив (отправь внутри группы)\n"
-        "/links — ссылки (канал, инстаграм) — бот даёт их по запросу\n"
-        "/stats — статистика\n"
-        "/id — узнать Telegram ID\n\n"
-        "📋 Пошаговая инструкция с галочками (что готово, что осталось): /help"
+        "Salom! Aloqadaman 🤝\n\n"
+        "Lichkangizda nima qilaman:\n"
+        "• pedagoglarning kurslar bo'yicha savollariga javob beraman;\n"
+        "• cheklarni qabul qilib tekshiraman (dubl, boshqa karta, summa);\n"
+        "• bahsli holat va to'lovni tasdiqlash uchun sizga ko'rsataman.\n\n"
+        "⚡️ Milliy kursini tez sozlash (bitta buyruq bilan):\n"
+        "/setupmilliy — Milliy kursini yaratish (boshlang'ich sinflar)\n"
+        "/setprice milliy 300000 — narx\n"
+        "/setchannel milliy https://t.me/... — ochiq kanal\n"
+        "/setstart milliy 2026-11-15 — boshlanish sanasi (sir)\n"
+        "/bindgroup milliy — yopiq guruhni biriktirish (guruh ichida)\n\n"
+        "Qolgani:\n"
+        "/courses — kurslar (narx, sanalar)\n"
+        "/addcourse — kursni qo'lda qo'shish (usta rejim)\n"
+        "/requisites — to'lov rekvizitlarini kiritish\n"
+        "/bindreceipts — barcha cheklarni arxiv-guruhga yig'ish (guruh ichida yuboring)\n"
+        "/links — havolalar (kanal, instagram) — bot so'rovga ko'ra beradi\n"
+        "/stats — statistika\n"
+        "/id — Telegram ID ni bilish\n\n"
+        "📋 Bosqichma-bosqich yo'riqnoma (nima tayyor, nima qoldi): /help"
     )
 
 
@@ -83,34 +83,34 @@ async def cmd_help(message: Message) -> None:
 
     has_course = milliy is not None
     lines = [
-        "🧭 Инструкция по настройке — иди по шагам сверху вниз:",
+        "🧭 Sozlash yo'riqnomasi — yuqoridan pastga bosqichma-bosqich boring:",
         "",
-        f"{mark(conn)} 1. Подключить бота к личке",
-        "   Настройки Telegram → Telegram для бизнеса → Чат-боты → добавить бота,",
-        "   право «Отвечать на сообщения».",
+        f"{mark(conn)} 1. Botni lichkaga ulash",
+        "   Telegram sozlamalari → Biznes uchun Telegram → Chat-botlar → botni qo'shing,",
+        "   «Xabarlarga javob berish» huquqi bilan.",
         "",
-        f"{mark(requisites)} 2. Реквизиты для оплаты",
-        "   /requisites 8600 1234 5678 9012, Насиба Х.",
+        f"{mark(requisites)} 2. To'lov rekvizitlari",
+        "   /requisites 8600 1234 5678 9012, Nasiba X.",
         "",
-        f"{mark(has_course)} 3. Создать курс Milliy",
+        f"{mark(has_course)} 3. Milliy kursini yaratish",
         "   /setupmilliy",
         "",
-        f"{mark(bool(milliy and milliy.price_sum))} 4. Задать цену курса",
+        f"{mark(bool(milliy and milliy.price_sum))} 4. Kurs narxini kiritish",
         "   /setprice milliy 300000",
         "",
-        f"{mark(bool(milliy and milliy.channel_url))} 5. Открытый канал (бот даёт всем)",
+        f"{mark(bool(milliy and milliy.channel_url))} 5. Ochiq kanal (bot hammaga beradi)",
         "   /setchannel milliy https://t.me/...",
         "",
-        f"{mark(bool(milliy and milliy.start_date))} 6. Дата старта (секрет) — или без срока",
-        "   дата: /setstart milliy 2026-11-15   ·   постоянный набор: /setstart milliy -",
+        f"{mark(bool(milliy and milliy.start_date))} 6. Boshlanish sanasi (sir) — yoki muddatsiz",
+        "   sana: /setstart milliy 2026-11-15   ·   doimiy qabul: /setstart milliy -",
         "",
-        f"{mark(bool(milliy and milliy.private_chat_id))} 7. Закрытая группа (одноразовые ссылки)",
-        "   добавь меня админом в закрытую группу и отправь там: /bindgroup milliy",
+        f"{mark(bool(milliy and milliy.private_chat_id))} 7. Yopiq guruh (bir martalik havolalar)",
+        "   meni yopiq guruhga admin qilib qo'shing va o'sha yerda yuboring: /bindgroup milliy",
         "",
-        f"{mark(receipts_grp)} 8. Группа-архив чеков (по желанию)",
-        "   создай приватную группу, добавь меня и отправь там: /bindreceipts",
+        f"{mark(receipts_grp)} 8. Cheklar arxiv-guruhi (ixtiyoriy)",
+        "   yopiq guruh yarating, meni qo'shing va o'sha yerda yuboring: /bindreceipts",
         "",
-        "Проверить курсы: /courses · Статистика: /stats · Это меню снова: /help",
+        "Kurslarni ko'rish: /courses · Statistika: /stats · Bu menyu yana: /help",
     ]
     await message.answer("\n".join(lines))
 
@@ -131,16 +131,16 @@ async def cmd_stats(message: Message) -> None:
         )
         by_status = {s: c for s, c in rows.all()}
     lines = [
-        "📊 Статистика",
-        f"Педагогов написало: {leads or 0}",
-        f"Ждут твоего решения: {pending or 0}",
+        "📊 Statistika",
+        f"Yozgan pedagoglar: {leads or 0}",
+        f"Sizning qaroringizni kutmoqda: {pending or 0}",
         "",
-        "Чеки:",
-        f"• чистых: {by_status.get(ReceiptStatus.clean.value, 0)}",
-        f"• подтверждено: {by_status.get(ReceiptStatus.approved.value, 0)}",
-        f"• 🚨 дублей: {by_status.get(ReceiptStatus.duplicate.value, 0)}",
-        f"• ⚠️ чужая карта: {by_status.get(ReceiptStatus.wrong_card.value, 0)}",
-        f"• отклонено: {by_status.get(ReceiptStatus.rejected.value, 0)}",
+        "Cheklar:",
+        f"• toza: {by_status.get(ReceiptStatus.clean.value, 0)}",
+        f"• tasdiqlangan: {by_status.get(ReceiptStatus.approved.value, 0)}",
+        f"• 🚨 dubl: {by_status.get(ReceiptStatus.duplicate.value, 0)}",
+        f"• ⚠️ boshqa karta: {by_status.get(ReceiptStatus.wrong_card.value, 0)}",
+        f"• rad etilgan: {by_status.get(ReceiptStatus.rejected.value, 0)}",
     ]
     await message.answer("\n".join(lines))
 
@@ -153,14 +153,14 @@ async def cmd_requisites(message: Message, command: CommandObject) -> None:
         if not command.args:
             cur = await get_setting(session, KEY_REQUISITES)
             await message.answer(
-                "Текущие реквизиты для педагогов:\n\n"
-                + (cur or "(не заданы)")
-                + "\n\nЧтобы изменить: /requisites <текст с картой и именем>"
+                "Pedagoglar uchun joriy rekvizitlar:\n\n"
+                + (cur or "(kiritilmagan)")
+                + "\n\nO'zgartirish uchun: /requisites <karta va ism matni>"
             )
             return
         await set_setting(session, KEY_REQUISITES, command.args.strip())
         await session.commit()
-    await message.answer("✅ Реквизиты обновлены. Теперь я буду давать их педагогам.")
+    await message.answer("✅ Rekvizitlar yangilandi. Endi men ularni pedagoglarga beraman.")
 
 
 @router.message(Command("links"))
@@ -171,15 +171,15 @@ async def cmd_links(message: Message) -> None:
         links = await list_links(session)
     if not links:
         await message.answer(
-            "Ссылок пока нет.\n"
-            "Добавить: /addlink <имя> <ссылка>\n"
-            "Напр.: /addlink kanal https://t.me/nasiba"
+            "Hali havolalar yo'q.\n"
+            "Qo'shish: /addlink <nom> <havola>\n"
+            "Masalan: /addlink kanal https://t.me/nasiba"
         )
         return
-    out = ["🔗 Ссылки (бот даёт их педагогам по запросу):"]
+    out = ["🔗 Havolalar (bot so'rovga ko'ra pedagoglarga beradi):"]
     for name, url in links.items():
         out.append(f"• {name}: {url}")
-    out.append("\nДобавить: /addlink <имя> <ссылка>\nУдалить: /dellink <имя>")
+    out.append("\nQo'shish: /addlink <nom> <havola>\nO'chirish: /dellink <nom>")
     await message.answer("\n".join(out))
 
 
@@ -189,13 +189,13 @@ async def cmd_addlink(message: Message, command: CommandObject) -> None:
         return
     parts = (command.args or "").split(maxsplit=1)
     if len(parts) < 2:
-        await message.answer("Формат: /addlink <имя> <ссылка>\nНапр.: /addlink kanal https://t.me/nasiba")
+        await message.answer("Format: /addlink <nom> <havola>\nMasalan: /addlink kanal https://t.me/nasiba")
         return
     name, url = parts[0], parts[1].strip()
     async with SessionLocal() as session:
         await set_link(session, name, url)
         await session.commit()
-    await message.answer(f"✅ Ссылка «{name}» сохранена. Теперь бот даёт её, когда педагог просит.")
+    await message.answer(f"✅ «{name}» havolasi saqlandi. Endi bot uni pedagog so'raganda beradi.")
 
 
 @router.message(Command("dellink"))
@@ -204,12 +204,12 @@ async def cmd_dellink(message: Message, command: CommandObject) -> None:
         return
     name = (command.args or "").strip()
     if not name:
-        await message.answer("Формат: /dellink <имя>")
+        await message.answer("Format: /dellink <nom>")
         return
     async with SessionLocal() as session:
         ok = await del_link(session, name)
         await session.commit()
-    await message.answer("✅ Удалил." if ok else "Такой ссылки нет.")
+    await message.answer("✅ O'chirildi." if ok else "Bunday havola yo'q.")
 
 
 @router.message(Command("bindgroup"))
@@ -220,25 +220,25 @@ async def cmd_bindgroup(message: Message, command: CommandObject) -> None:
         return
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(
-            "Эту команду надо отправить ВНУТРИ закрытой группы (где я админ): "
-            "/bindgroup <ключ_курса>, напр. /bindgroup milliy"
+            "Bu buyruqni yopiq guruh ICHIDA yuborish kerak (men u yerda adminman): "
+            "/bindgroup <kurs_kaliti>, masalan /bindgroup milliy"
         )
         return
     key = (command.args or "").strip().lower()
     if not key:
-        await message.answer("Укажи ключ курса: /bindgroup milliy")
+        await message.answer("Kurs kalitini ko'rsating: /bindgroup milliy")
         return
     async with SessionLocal() as session:
         c = (await session.execute(select(Course).where(Course.key == key))).scalar_one_or_none()
         if c is None:
-            await message.answer(f"Курс [{key}] не найден. Сначала добавь его: /addcourse")
+            await message.answer(f"[{key}] kursi topilmadi. Avval qo'shing: /addcourse")
             return
         c.private_chat_id = message.chat.id
         await session.commit()
         name = c.name
     await message.answer(
-        f"✅ Привязал эту группу к курсу «{name}». Теперь после оплаты я выдаю сюда "
-        f"одноразовые ссылки. Убедись, что я админ с правом «Пригласить по ссылке»."
+        f"✅ Bu guruh «{name}» kursiga biriktirildi. Endi to'lovdan keyin men shu yerga "
+        f"bir martalik havolalar beraman. Men «Havola orqali taklif qilish» huquqli admin ekanimga ishonch hosil qiling."
     )
 
 
@@ -250,17 +250,17 @@ async def cmd_bindreceipts(message: Message) -> None:
         return
     if message.chat.type not in ("group", "supergroup"):
         await message.answer(
-            "Эту команду надо отправить ВНУТРИ группы, куда собирать чеки "
-            "(я должен быть в этой группе): просто /bindreceipts"
+            "Bu buyruqni cheklar yig'iladigan guruh ICHIDA yuborish kerak "
+            "(men o'sha guruhda bo'lishim shart): shunchaki /bindreceipts"
         )
         return
     async with SessionLocal() as session:
         await set_setting(session, KEY_RECEIPTS_GROUP, str(message.chat.id))
         await session.commit()
     await message.answer(
-        "✅ Готово. Теперь каждый присланный чек с данными педагога я складываю сюда — "
-        "будет визуальный архив (база).\n\n"
-        "⚠️ Держи эту группу приватной, с минимумом людей: тут платёжные данные."
+        "✅ Tayyor. Endi har bir yuborilgan chekni pedagog ma'lumotlari bilan shu yerga "
+        "joylayman — ko'rinadigan arxiv (baza) bo'ladi.\n\n"
+        "⚠️ Bu guruhni yopiq saqlang, minimal odam bilan: bu yerda to'lov ma'lumotlari bor."
     )
 
 
@@ -271,22 +271,22 @@ async def cmd_courses(message: Message) -> None:
     async with SessionLocal() as session:
         rows = (await session.execute(select(Course))).scalars().all()
     if not rows:
-        await message.answer("Курсов пока нет. Добавь: /addcourse")
+        await message.answer("Hali kurslar yo'q. Qo'shing: /addcourse")
         return
-    out = ["📚 Курсы:"]
+    out = ["📚 Kurslar:"]
     for c in rows:
-        price = f"{c.price_sum:,}".replace(",", " ") + " сум" if c.price_sum else "цена —"
-        mark = "" if c.is_active else " (скрыт)"
+        price = f"{c.price_sum:,}".replace(",", " ") + " so'm" if c.price_sum else "narx —"
+        mark = "" if c.is_active else " (yashirin)"
         line = f"• [{c.key}] {c.name} — {price}{mark}"
         if c.channel_url:
-            line += f"\n   📢 открытый канал (даю всем): {c.channel_url}"
+            line += f"\n   📢 ochiq kanal (hammaga beraman): {c.channel_url}"
         start = c.start_date.isoformat() if c.start_date else "—"
         if c.private_chat_id:
-            line += f"\n   🔒 закрытая группа: одноразовые ссылки ВКЛ · старт {start}"
+            line += f"\n   🔒 yopiq guruh: bir martalik havolalar YOQILGAN · boshlanish {start}"
         elif c.private_access or c.start_date:
-            line += f"\n   🔒 закрытая группа (после оплаты): {c.private_access or '—'} · старт {start}"
+            line += f"\n   🔒 yopiq guruh (to'lovdan keyin): {c.private_access or '—'} · boshlanish {start}"
         out.append(line)
-    out.append("\nДобавить/обновить: /addcourse")
+    out.append("\nQo'shish/yangilash: /addcourse")
     await message.answer("\n".join(out))
 
 
@@ -294,12 +294,12 @@ async def cmd_courses(message: Message) -> None:
 
 MILLIY_NAME = "Milliy sertifikat — boshlang'ich sinf o'qituvchilari"
 MILLIY_DESC = (
-    "Подготовка учителей начальных классов к экзамену Milliy sertifikat. "
-    "Один курс, охватывает все 3 блока экзамена: "
-    "1) Она тили ва o'qish savodxonligi (методика родного языка и чтения); "
-    "2) Математика ва методика; "
-    "3) Педагогик махорат (tabiiy fanlar + педагогика). "
-    "Формат экзамена: 90 вопросов. Для boshlang'ich sinf o'qituvchilari."
+    "Boshlang'ich sinf o'qituvchilarini Milliy sertifikat imtihoniga tayyorlash. "
+    "Bitta kurs, imtihonning 3 blokini ham qamrab oladi: "
+    "1) Ona tili va o'qish savodxonligi; "
+    "2) Matematika va metodika; "
+    "3) Pedagogik mahorat (tabiiy fanlar + pedagogika). "
+    "Imtihon formati: 90 savol. Boshlang'ich sinf o'qituvchilari uchun."
 )
 
 
@@ -330,16 +330,16 @@ async def cmd_setupmilliy(message: Message, command: CommandObject) -> None:
             c.price_sum = price
         await session.commit()
         cur_price = c.price_sum
-    price_line = f"{cur_price:,}".replace(",", " ") + " сум" if cur_price else "НЕ задана ⚠️"
+    price_line = f"{cur_price:,}".replace(",", " ") + " so'm" if cur_price else "kiritilmagan ⚠️"
     await message.answer(
-        "✅ Курс «Milliy сертификат (начальные классы)» готов.\n\n"
-        f"Цена: {price_line}\n\n"
-        "Осталось заполнить (по одной команде):\n"
-        "• /setprice milliy 300000 — цена (нужна для сверки суммы чека)\n"
-        "• /setchannel milliy https://t.me/... — открытый канал (бот даёт всем)\n"
-        "• /setstart milliy 2026-11-15 — дата старта (секрет, бот даст после оплаты)\n"
-        "• /bindgroup milliy — отправь ВНУТРИ закрытой группы (я там админ)\n\n"
-        "Проверить: /courses"
+        "✅ «Milliy sertifikat (boshlang'ich sinflar)» kursi tayyor.\n\n"
+        f"Narx: {price_line}\n\n"
+        "To'ldirish qoldi (har biri bitta buyruq):\n"
+        "• /setprice milliy 300000 — narx (chek summasini solishtirish uchun kerak)\n"
+        "• /setchannel milliy https://t.me/... — ochiq kanal (bot hammaga beradi)\n"
+        "• /setstart milliy 2026-11-15 — boshlanish sanasi (sir, bot to'lovdan keyin aytadi)\n"
+        "• /bindgroup milliy — yopiq guruh ICHIDA yuboring (men u yerda adminman)\n\n"
+        "Tekshirish: /courses"
     )
 
 
@@ -349,23 +349,23 @@ async def cmd_setprice(message: Message, command: CommandObject) -> None:
         return
     parts = (command.args or "").split()
     if len(parts) < 2:
-        await message.answer("Формат: /setprice <ключ> <сумма>\nНапр.: /setprice milliy 300000")
+        await message.answer("Format: /setprice <kalit> <summa>\nMasalan: /setprice milliy 300000")
         return
     key = parts[0].lower()
     digits = "".join(ch for ch in parts[1] if ch.isdigit())
     if not digits:
-        await message.answer("Сумма должна быть числом. Напр.: /setprice milliy 300000")
+        await message.answer("Summa raqam bo'lishi kerak. Masalan: /setprice milliy 300000")
         return
     async with SessionLocal() as session:
         c = await _get_course(session, key)
         if c is None:
-            await message.answer(f"Курс [{key}] не найден. Сначала /setupmilliy или /addcourse.")
+            await message.answer(f"[{key}] kursi topilmadi. Avval /setupmilliy yoki /addcourse.")
             return
         c.price_sum = int(digits)
         await session.commit()
         name = c.name
     pretty = f"{int(digits):,}".replace(",", " ")
-    await message.answer(f"✅ Цена курса «{name}»: {pretty} сум. Теперь сверяю сумму чека по ней.")
+    await message.answer(f"✅ «{name}» kursi narxi: {pretty} so'm. Endi chek summasini shunga qarab tekshiraman.")
 
 
 @router.message(Command("setchannel"))
@@ -375,19 +375,19 @@ async def cmd_setchannel(message: Message, command: CommandObject) -> None:
     parts = (command.args or "").split(maxsplit=1)
     if len(parts) < 2:
         await message.answer(
-            "Формат: /setchannel <ключ> <ссылка>\nНапр.: /setchannel milliy https://t.me/nasiba"
+            "Format: /setchannel <kalit> <havola>\nMasalan: /setchannel milliy https://t.me/nasiba"
         )
         return
     key, url = parts[0].lower(), parts[1].strip()
     async with SessionLocal() as session:
         c = await _get_course(session, key)
         if c is None:
-            await message.answer(f"Курс [{key}] не найден. Сначала /setupmilliy или /addcourse.")
+            await message.answer(f"[{key}] kursi topilmadi. Avval /setupmilliy yoki /addcourse.")
             return
         c.channel_url = url
         await session.commit()
         name = c.name
-    await message.answer(f"✅ Открытый канал курса «{name}» задан. Бот даёт его всем для прогрева.")
+    await message.answer(f"✅ «{name}» kursining ochiq kanali kiritildi. Bot uni qiziqtirish uchun hammaga beradi.")
 
 
 @router.message(Command("setstart"))
@@ -397,8 +397,8 @@ async def cmd_setstart(message: Message, command: CommandObject) -> None:
     parts = (command.args or "").split()
     if len(parts) < 2:
         await message.answer(
-            "Формат: /setstart <ключ> <ГГГГ-ММ-ДД>\nНапр.: /setstart milliy 2026-11-15\n"
-            "Или /setstart milliy - — сделать курс БЕЗ срока (постоянный набор)."
+            "Format: /setstart <kalit> <YYYY-MM-DD>\nMasalan: /setstart milliy 2026-11-15\n"
+            "Yoki /setstart milliy - — kursni MUDDATSIZ qilish (doimiy qabul)."
         )
         return
     key = parts[0].lower()
@@ -409,27 +409,27 @@ async def cmd_setstart(message: Message, command: CommandObject) -> None:
             start = date.fromisoformat(parts[1])
         except ValueError:
             await message.answer(
-                "Дата в формате ГГГГ-ММ-ДД, или «-» для бессрочного курса.\n"
-                "Напр.: /setstart milliy 2026-11-15"
+                "Sana YYYY-MM-DD formatida, yoki muddatsiz kurs uchun «-».\n"
+                "Masalan: /setstart milliy 2026-11-15"
             )
             return
     async with SessionLocal() as session:
         c = await _get_course(session, key)
         if c is None:
-            await message.answer(f"Курс [{key}] не найден. Сначала /setupmilliy или /addcourse.")
+            await message.answer(f"[{key}] kursi topilmadi. Avval /setupmilliy yoki /addcourse.")
             return
         c.start_date = start
         await session.commit()
         name = c.name
     if start:
         await message.answer(
-            f"✅ Дата старта «{name}»: {start.isoformat()}. Это СЕКРЕТ — бот назовёт её "
-            "только после подтверждённой оплаты."
+            f"✅ «{name}» boshlanish sanasi: {start.isoformat()}. Bu SIR — bot uni "
+            "faqat to'lov tasdiqlangach aytadi."
         )
     else:
         await message.answer(
-            f"✅ Курс «{name}» — БЕЗ срока (постоянный набор). Бот будет говорить, что "
-            "присоединиться можно в любой момент, и продолжит рекомендовать курс новым педагогам."
+            f"✅ «{name}» kursi — MUDDATSIZ (doimiy qabul). Bot istalgan vaqtda qo'shilish "
+            "mumkinligini aytadi va kursni yangi pedagoglarga tavsiya qilishda davom etadi."
         )
 
 
@@ -440,21 +440,21 @@ async def cmd_addcourse(message: Message, state: FSMContext) -> None:
     if not _is_admin(message):
         return
     await state.set_state(AddCourse.waiting_key)
-    await message.answer("Короткий ключ курса (латиницей, напр. milliy):")
+    await message.answer("Kursning qisqa kaliti (lotincha, masalan milliy):")
 
 
 @router.message(AddCourse.waiting_key)
 async def ac_key(message: Message, state: FSMContext) -> None:
     await state.update_data(key=message.text.strip().lower())
     await state.set_state(AddCourse.waiting_name)
-    await message.answer("Название курса:")
+    await message.answer("Kurs nomi:")
 
 
 @router.message(AddCourse.waiting_name)
 async def ac_name(message: Message, state: FSMContext) -> None:
     await state.update_data(name=message.text.strip())
     await state.set_state(AddCourse.waiting_price)
-    await message.answer("Цена в сумах (только число, или 0 если не указывать):")
+    await message.answer("Narx so'mda (faqat raqam, yoki 0 — ko'rsatmaslik uchun):")
 
 
 @router.message(AddCourse.waiting_price)
@@ -463,8 +463,8 @@ async def ac_price(message: Message, state: FSMContext) -> None:
     await state.update_data(price=int(digits) if digits else 0)
     await state.set_state(AddCourse.waiting_start)
     await message.answer(
-        "Дата старта ЗАКРЫТОЙ группы в формате ГГГГ-ММ-ДД (секрет — бот назовёт её "
-        "только после оплаты), или «-»:"
+        "YOPIQ guruh boshlanish sanasi YYYY-MM-DD formatida (sir — bot uni faqat "
+        "to'lovdan keyin aytadi), yoki «-»:"
     )
 
 
@@ -476,11 +476,11 @@ async def ac_start(message: Message, state: FSMContext) -> None:
         try:
             start = date.fromisoformat(raw)
         except ValueError:
-            await message.answer("Не похоже на дату. Повтори ГГГГ-ММ-ДД или «-»:")
+            await message.answer("Sanaga o'xshamaydi. YYYY-MM-DD yoki «-» ni qaytaring:")
             return
     await state.update_data(start=start.isoformat() if start else None)
     await state.set_state(AddCourse.waiting_group)
-    await message.answer("Группа / тоифа (или «-»):")
+    await message.answer("Guruh / toifa (yoki «-»):")
 
 
 @router.message(AddCourse.waiting_group)
@@ -489,7 +489,7 @@ async def ac_group(message: Message, state: FSMContext) -> None:
     await state.update_data(group=None if raw == "-" else raw)
     await state.set_state(AddCourse.waiting_channel)
     await message.answer(
-        "Ссылка на ОТКРЫТЫЙ канал направления (его бот даёт всем для прогрева), или «-»:"
+        "Yo'nalishning OCHIQ kanaliga havola (bot uni qiziqtirish uchun hammaga beradi), yoki «-»:"
     )
 
 
@@ -499,7 +499,7 @@ async def ac_channel(message: Message, state: FSMContext) -> None:
     await state.update_data(channel=None if raw == "-" else raw)
     await state.set_state(AddCourse.waiting_private)
     await message.answer(
-        "Ссылка на ЗАКРЫТУЮ группу (бот даёт её ТОЛЬКО после подтверждённой оплаты), или «-»:"
+        "YOPIQ guruhga havola (bot uni FAQAT to'lov tasdiqlangach beradi), yoki «-»:"
     )
 
 
@@ -508,7 +508,7 @@ async def ac_private(message: Message, state: FSMContext) -> None:
     raw = (message.text or "").strip()
     await state.update_data(private=None if raw == "-" else raw)
     await state.set_state(AddCourse.waiting_desc)
-    await message.answer("Короткое описание (что входит, кому, длительность) или «-»:")
+    await message.answer("Qisqa tavsif (nima kiradi, kimga, davomiyligi) yoki «-»:")
 
 
 @router.message(AddCourse.waiting_desc)
@@ -539,4 +539,4 @@ async def ac_desc(message: Message, state: FSMContext) -> None:
                 description=desc,
             ))
         await session.commit()
-    await message.answer(f"✅ Курс «{data['name']}» сохранён. Проверь: /courses")
+    await message.answer(f"✅ «{data['name']}» kursi saqlandi. Tekshiring: /courses")
