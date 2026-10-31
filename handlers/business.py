@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 
 from aiogram import Bot, F, Router
 from aiogram.types import BufferedInputFile, BusinessConnection, Message
@@ -34,6 +35,31 @@ ASSISTANT_DEFER = (
     "Men Nasiba ustozning yordamchisiman 🙂 Asosan kurslar bo'yicha yordam beraman. "
     "Bu savol bo'yicha ustozning o'zi sizga tez orada javob beradi 🙏"
 )
+
+# Ответ на чистое приветствие — бот представляется как помощница-секретарь Насибы.
+GREETING_INTRO = (
+    "Assalomu alaykum! 🤝 Men Nasiba Abdullayevaning yordamchi kotibasiman. "
+    "Qo'limdan kelganicha sizga javob beraman. Kurslar bo'yicha nimaga qiziqsangiz, "
+    "bemalol so'rang 🙏"
+)
+
+# Слова-приветствия (латиница + кириллица). Если сообщение состоит ТОЛЬКО из них — здороваемся.
+_GREETING_WORDS = {
+    "salom", "assalom", "assalomu", "assalomualaykum", "alaykum", "alekum", "aleykum",
+    "vaalaykum", "vassalom", "salam", "hormang", "charchamang", "hayrli", "kun", "tong",
+    "kech", "hi", "hello", "hey", "privet", "zdravstvuyte", "ustoz", "opa", "hurmatli",
+    "салом", "ассалом", "ассалому", "алайкум", "алейкум", "ваалайкум", "салам",
+    "привет", "здравствуйте", "здравствуй", "хормасиз", "хайрли", "кун", "тонг", "кеч",
+    "устоз", "опа", "хурматли",
+}
+
+
+def _is_greeting(text: str) -> bool:
+    """True, если сообщение — только приветствие (без вопроса). Тогда отвечаем без ИИ."""
+    tokens = re.findall(r"[a-zA-Zа-яёА-ЯЁ'ʻ’]+", text.lower())
+    if not tokens or len(tokens) > 4:
+        return False
+    return all(t.strip("'ʻ’") in _GREETING_WORDS for t in tokens)
 
 _VERDICT = {
     ReceiptStatus.clean.value: "✅ TOZA — karta va summa mos keldi, dubl yo'q",
@@ -139,6 +165,12 @@ async def on_business_message(message: Message, bot: Bot) -> None:
                 await message.answer("Kirish faollashtirildi, lekin yo'nalish topilmadi — Nasiba siz bilan bog'lanadi.")
             else:
                 await message.answer(await access.build_access_message(bot, course))
+            await session.commit()
+            return
+
+        # 2b) Чистое приветствие — представляемся как помощница-секретарь (без траты ИИ).
+        if _is_greeting(text):
+            await message.answer(GREETING_INTRO)
             await session.commit()
             return
 

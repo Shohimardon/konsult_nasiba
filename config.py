@@ -41,8 +41,8 @@ class Settings(BaseSettings):
 
     # --- ИИ ---
     anthropic_api_key: str
-    # Ответы педагогам (текст) — Haiku: простой разбор + ответ из базы знаний, дёшево.
-    chat_model: str = "claude-haiku-4-5"
+    # Ответы педагогам (текст) — Sonnet: чистый узбекский важнее цены (Haiku по-узбекски слабоват).
+    chat_model: str = "claude-sonnet-4-5"
     # Чтение чеков (зрение, анти-фрод) — Sonnet: на кону деньги, надёжность важнее цены.
     vision_model: str = "claude-sonnet-4-5"
 
