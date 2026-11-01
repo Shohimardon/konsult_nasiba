@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models import Course, Lead, Setting
+from models import Course, FaqItem, Lead, Setting
 
 # Ключи в таблице settings.
 KEY_BUSINESS_CONNECTION = "business_connection_id"
@@ -67,6 +67,37 @@ async def list_links(session: AsyncSession) -> dict[str, str]:
     return {r.key[len(KEY_LINK_PREFIX):]: r.value for r in rows}
 
 
+async def add_faq(
+    session: AsyncSession, question: str, answer: str, photo_file_id: str | None = None
+) -> FaqItem:
+    item = FaqItem(
+        question=question.strip(),
+        answer=(answer or "").strip(),
+        photo_file_id=photo_file_id,
+    )
+    session.add(item)
+    await session.flush()
+    return item
+
+
+async def list_faq(session: AsyncSession) -> list[FaqItem]:
+    return (
+        await session.execute(select(FaqItem).order_by(FaqItem.id))
+    ).scalars().all()
+
+
+async def get_faq(session: AsyncSession, faq_id: int) -> FaqItem | None:
+    return await session.get(FaqItem, faq_id)
+
+
+async def del_faq(session: AsyncSession, faq_id: int) -> bool:
+    item = await session.get(FaqItem, faq_id)
+    if item is None:
+        return False
+    await session.delete(item)
+    return True
+
+
 async def build_knowledge(session: AsyncSession) -> str:
     """Собирает текст «что бот знает» для ИИ: активные курсы + реквизиты."""
     q = await session.execute(select(Course).where(Course.is_active.is_(True)))
@@ -124,4 +155,20 @@ async def build_knowledge(session: AsyncSession) -> str:
         lines.append("\nССЫЛКИ (давай педагогам по запросу):")
         for name, url in links.items():
             lines.append(f"- {name}: {url}")
+
+    faqs = await list_faq(session)
+    if faqs:
+        lines.append(
+            "\nЧАСТЫЕ ВОПРОСЫ И ОТВЕТЫ (это эталонные ответы Насибы — если сообщение педагога "
+            "похоже по смыслу на один из вопросов, ОТВЕЧАЙ по соответствующему ответу, "
+            "перефразируя живым языком на языке собеседника; не отправляй к Насибе). У каждого "
+            "есть номер [FAQ#N] — верни его в поле faq_id, если отвечаешь по этому вопросу:"
+        )
+        for f in faqs:
+            ans = f.answer or ""
+            if f.photo_file_id:
+                # К ответу прикреплена картинка — бот сам её пришлёт. Текст = короткая подводка.
+                ans = (ans + " [к этому ответу прикреплено ФОТО/СКРИН — бот сам приложит "
+                       "картинку; дай короткую дружелюбную подводку, саму картинку не описывай]").strip()
+            lines.append(f"[FAQ#{f.id}] В: {f.question}\nО: {ans}")
     return "\n".join(lines)

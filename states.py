@@ -8,6 +8,12 @@ class EditReply(StatesGroup):
     waiting_text = State()
 
 
+class AddFaq(StatesGroup):
+    """Пошаговое добавление частого вопроса: сначала вопрос, потом ответ."""
+    waiting_question = State()
+    waiting_answer = State()
+
+
 class AddCourse(StatesGroup):
     """Пошаговое добавление/правка курса."""
     waiting_key = State()

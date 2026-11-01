@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import io
 import logging
+import random
 import re
 
 from aiogram import Bot, F, Router
@@ -17,6 +19,7 @@ from services import (
     KEY_BUSINESS_CONNECTION,
     KEY_RECEIPTS_GROUP,
     build_knowledge,
+    get_faq,
     get_setting,
     set_setting,
     upsert_lead,
@@ -31,17 +34,42 @@ router = Router(name="business")
 RECEIPT_ACK = "Rahmat! Chekni oldik, tez orada tasdiqlaymiz 🙏"
 
 # Вежливый ответ на вопрос НЕ по теме курсов: бот — помощница устоза, Насиба ответит сама.
-ASSISTANT_DEFER = (
+# Несколько вариантов — бот выбирает случайно, чтобы не повторять одну фразу как робот.
+ASSISTANT_DEFER = [
     "Men Nasiba ustozning yordamchisiman 🙂 Asosan kurslar bo'yicha yordam beraman. "
-    "Bu savol bo'yicha ustozning o'zi sizga tez orada javob beradi 🙏"
-)
+    "Bu savol bo'yicha ustozning o'zi sizga tez orada javob beradi 🙏",
+    "Men ustozning yordamchi kotibasiman, ko'proq kurslar bo'yicha yordam bera olaman 🙂 "
+    "Bu savolga ustozning o'zlari javob beradilar — xabar berib qo'ydim 🙏",
+    "Buni ustozning o'zlariga qoldiray 🙏 Men asosan kurslar, to'lov va yozilish bo'yicha "
+    "yordam beraman. Kurslar haqida savolingiz bo'lsa — bemalol so'rang 🙂",
+    "Men yordamchi kotibaman, bu mavzu biroz mening doiramdan tashqarida 🙂 Ustozga yetkazdim, "
+    "tez orada o'zlari javob beradilar 🙏",
+]
+
+# Бот не знает ответа / вопрос деликатный — вежливо говорим педагогу, что позвали устоза.
+NO_ANSWER_DEFER = [
+    "Bu savolingizga menda hozircha aniq javob yo'q 🙏 Hozir ustozning o'zlariga xabar "
+    "berdim — tez orada kelib javob beradilar.",
+    "Buni aniq aytolmayman 🙏 Ustozning o'zlariga xabar qildim, tez orada sizga javob "
+    "beradilar. Biroz kutib turing, iltimos.",
+    "Bu borada ustozning o'zlari aniqroq javob beradilar 🙏 Hozir xabar berib qo'ydim — "
+    "tez orada siz bilan bog'lanadilar.",
+    "Kechirasiz, bu savolga hozircha javobim yo'q 🙏 Ustozga yetkazdim, imkon topishlari "
+    "bilan o'zlari javob beradilar.",
+]
 
 # Ответ на чистое приветствие — бот представляется как помощница-секретарь Насибы.
-GREETING_INTRO = (
+GREETING_INTRO = [
     "Assalomu alaykum! 🤝 Men Nasiba Abdullayevaning yordamchi kotibasiman. "
-    "Qo'limdan kelganicha sizga javob beraman. Kurslar bo'yicha nimaga qiziqsangiz, "
-    "bemalol so'rang 🙏"
-)
+    "Qo'limdan kelganicha savollaringizga javob beraman. Kurslar bo'yicha nima qiziqtirsa — "
+    "bemalol so'rayvering 🙏",
+    "Assalomu alaykum! 🙂 Men Nasiba Abdullayevaning yordamchisi — kotibasiman. Kurslar, narx, "
+    "to'lov bo'yicha savolingiz bo'lsa, yordam beraman. Marhamat, so'rang 🙏",
+    "Vaalaykum assalom! 🤝 Men Nasiba ustozning yordamchi kotibasiman. Qo'limdan kelganicha "
+    "sizga javob beraman. Qaysi kurs qiziqtiryapti — yozavering 🙏",
+    "Assalomu alaykum, xush kelibsiz! 🙌 Men Nasiba Abdullayevaning yordamchi kotibasiman. "
+    "Kurslar haqida nimani bilmoqchi bo'lsangiz — bemalol so'rang, yordam beraman 🙏",
+]
 
 # Слова-приветствия (латиница + кириллица). Если сообщение состоит ТОЛЬКО из них — здороваемся.
 _GREETING_WORDS = {
@@ -152,9 +180,10 @@ async def on_business_message(message: Message, bot: Bot) -> None:
         if ac is not None:
             status, course = await access.redeem(session, ac, message.from_user.id)
             if status == "foreign":
-                await message.answer(
+                await _human_reply(
+                    message, bot, bcid,
                     "Bu kod sizga tegishli emas 🚫 Iltimos, o'zingiz to'lab, shaxsiy kod oling "
-                    "yoki Nasiba bilan bog'laning."
+                    "yoki Nasiba bilan bog'laning.",
                 )
                 await bot.send_message(
                     settings.nasiba_chat_id,
@@ -162,15 +191,15 @@ async def on_business_message(message: Message, bot: Bot) -> None:
                     f"Kimdir o'z kodini bergan ko'rinadi (urinishlar: {ac.share_attempts}).",
                 )
             elif course is None:
-                await message.answer("Kirish faollashtirildi, lekin yo'nalish topilmadi — Nasiba siz bilan bog'lanadi.")
+                await _human_reply(message, bot, bcid, "Kirish faollashtirildi, lekin yo'nalish topilmadi — Nasiba siz bilan bog'lanadi.")
             else:
-                await message.answer(await access.build_access_message(bot, course))
+                await _human_reply(message, bot, bcid, await access.build_access_message(bot, course))
             await session.commit()
             return
 
         # 2b) Чистое приветствие — представляемся как помощница-секретарь (без траты ИИ).
         if _is_greeting(text):
-            await message.answer(GREETING_INTRO)
+            await _human_reply(message, bot, bcid, random.choice(GREETING_INTRO))
             await session.commit()
             return
 
@@ -191,7 +220,7 @@ async def on_business_message(message: Message, bot: Bot) -> None:
 
         # Вопрос НЕ по теме курсов — вежливо отвечаем как помощница, зовём Насибу ответить самой.
         if res.get("out_of_scope"):
-            await message.answer(ASSISTANT_DEFER)
+            await _human_reply(message, bot, bcid, random.choice(ASSISTANT_DEFER))
             await bot.send_message(
                 settings.nasiba_chat_id,
                 f"🙋 {_who(lead)} dan kurslarga OID BO'LMAGAN savol:\n«{text[:400]}»\n\n"
@@ -204,7 +233,9 @@ async def on_business_message(message: Message, bot: Bot) -> None:
         draft = (res.get("reply") or "").strip()
 
         if res.get("needs_human") or not draft:
-            # Деликатное/спорное — готовим черновик, но решает Насиба.
+            # Деликатное/спорное или бот не знает ответа — вежливо говорим педагогу,
+            # что позвали устоза, и готовим черновик, но решает Насиба.
+            await _human_reply(message, bot, bcid, random.choice(NO_ANSWER_DEFER))
             reply = PendingReply(
                 lead_id=lead.id,
                 customer_chat_id=message.chat.id,
@@ -223,8 +254,18 @@ async def on_business_message(message: Message, bot: Bot) -> None:
             await session.commit()
             return
 
-        # Простой вопрос — отвечаем сами.
-        await message.answer(draft)
+        # Простой вопрос — отвечаем сами, по-человечески (с «печатает…» и паузой).
+        # Если ответ основан на FAQ с прикреплённым скрином — приложим картинку.
+        faq_photo = None
+        fid = res.get("faq_id")
+        if fid is not None:
+            try:
+                faq = await get_faq(session, int(fid))
+                if faq and faq.photo_file_id:
+                    faq_photo = faq.photo_file_id
+            except (TypeError, ValueError):
+                pass
+        await _human_reply(message, bot, bcid, draft, faq_photo)
         await session.commit()
 
 
@@ -274,6 +315,40 @@ async def _extract_text(message: Message, bot: Bot) -> str:
 def _who(lead) -> str:
     uname = f" (@{lead.username})" if lead.username else ""
     return f"{lead.name or 'pedagog'}{uname}"
+
+
+async def _human_reply(
+    message: Message, bot: Bot, bcid: str | None, text: str, photo_file_id: str | None = None
+) -> None:
+    """Отвечает «как живой человек»: показывает «печатает…» и держит паузу перед ответом.
+
+    Пауза зависит от длины ответа (короткое — быстрее, длинное — дольше) плюс случайный
+    разброс, чтобы ритм не был одинаковым. Пока идёт пауза — в чате крутится «печатает…»
+    (а если к ответу есть фото/скрин — «отправляет фото…»). Telegram гасит индикатор
+    через ~5 сек, поэтому переотправляем его шагами.
+    """
+    action = "upload_photo" if photo_file_id else "typing"
+    delay = len(text or "") / 22 + random.uniform(0.5, 2.0)
+    delay = max(5.0, min(10.0, delay))
+    elapsed = 0.0
+    while elapsed < delay:
+        try:
+            await bot.send_chat_action(
+                chat_id=message.chat.id, action=action, business_connection_id=bcid
+            )
+        except Exception as e:  # noqa: BLE001 — индикатор не должен ломать ответ
+            logger.debug("send_chat_action не прошёл: %r", e)
+            break
+        step = min(4.0, delay - elapsed)
+        await asyncio.sleep(step)
+        elapsed += step
+    if photo_file_id:
+        try:
+            await message.answer_photo(photo_file_id, caption=text or None)
+            return
+        except Exception as e:  # noqa: BLE001 — если фото не отправилось, шлём хотя бы текст
+            logger.warning("Не смог отправить фото FAQ: %r", e)
+    await message.answer(text)
 
 
 async def _archive_receipt(bot, session, receipt, lead, file_bytes: bytes, media_type: str) -> None:

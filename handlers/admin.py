@@ -15,13 +15,16 @@ from services import (
     KEY_BUSINESS_CONNECTION,
     KEY_RECEIPTS_GROUP,
     KEY_REQUISITES,
+    add_faq,
+    del_faq,
     del_link,
     get_setting,
+    list_faq,
     list_links,
     set_link,
     set_setting,
 )
-from states import AddCourse
+from states import AddCourse, AddFaq
 
 router = Router(name="admin")
 
@@ -59,6 +62,7 @@ async def cmd_start(message: Message) -> None:
         "/addcourse — kursni qo'lda qo'shish (usta rejim)\n"
         "/requisites — to'lov rekvizitlarini kiritish\n"
         "/bindreceipts — barcha cheklarni arxiv-guruhga yig'ish (guruh ichida yuboring)\n"
+        "/faq — tez-tez so'raladigan savol-javoblar (bot ular bilan aqlliroq javob beradi)\n"
         "/links — havolalar (kanal, instagram) — bot so'rovga ko'ra beradi\n"
         "/stats — statistika\n"
         "/id — Telegram ID ni bilish\n\n"
@@ -210,6 +214,94 @@ async def cmd_dellink(message: Message, command: CommandObject) -> None:
         ok = await del_link(session, name)
         await session.commit()
     await message.answer("✅ O'chirildi." if ok else "Bunday havola yo'q.")
+
+
+# --- частые вопросы (FAQ): админ пополняет «словарь» бота ---
+
+@router.message(Command("faq"))
+async def cmd_faq(message: Message) -> None:
+    if not _is_admin(message):
+        return
+    async with SessionLocal() as session:
+        faqs = await list_faq(session)
+    if not faqs:
+        await message.answer(
+            "Hali tez-tez so'raladigan savollar yo'q.\n\n"
+            "Qo'shish: /addfaq — avval savolni, keyin javobni so'rayman.\n"
+            "Shundan keyin bot shunga o'xshash savollarga o'zi chiroyli javob beradi "
+            "(Nasibaga yubormaydi)."
+        )
+        return
+    out = ["📖 Tez-tez so'raladigan savol-javoblar (bot ular asosida javob beradi):\n"]
+    for f in faqs:
+        pic = " 📷" if f.photo_file_id else ""
+        body = f.answer or "(rasm)"
+        out.append(f"#{f.id}{pic}\n❓ {f.question}\n💬 {body}\n")
+    out.append("Qo'shish: /addfaq (rasm ham qo'yish mumkin) · O'chirish: /delfaq <raqam>")
+    await message.answer("\n".join(out))
+
+
+@router.message(Command("addfaq"))
+async def cmd_addfaq(message: Message, state: FSMContext) -> None:
+    if not _is_admin(message):
+        return
+    await state.set_state(AddFaq.waiting_question)
+    await message.answer(
+        "❓ Savolni yozing — pedagoglar qanday so'rashi mumkin bo'lsa, shunday "
+        "(masalan: «Kurs qancha turadi?» yoki «Qachon boshlanadi?»):"
+    )
+
+
+@router.message(AddFaq.waiting_question)
+async def faq_question(message: Message, state: FSMContext) -> None:
+    await state.update_data(question=(message.text or "").strip())
+    await state.set_state(AddFaq.waiting_answer)
+    await message.answer(
+        "💬 Endi shu savolga javobni yuboring.\n"
+        "• Oddiy matn yozsangiz — bot shu asosda javob beradi.\n"
+        "• Rasm/skrin qo'ymoqchi bo'lsangiz — rasmni yuboring (izoh/matnni rasm tagiga "
+        "yozsangiz ham bo'ladi). Bot o'sha savolga shu rasmni ko'rsatadi 📷"
+    )
+
+
+@router.message(AddFaq.waiting_answer)
+async def faq_answer(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    question = data.get("question", "")
+    # Фото/скрин (можно с подписью) ИЛИ обычный текст.
+    photo_file_id = message.photo[-1].file_id if message.photo else None
+    if photo_file_id:
+        answer = (message.caption or "").strip()
+    else:
+        answer = (message.text or "").strip()
+    if not question or (not answer and not photo_file_id):
+        await message.answer("Bo'sh javob — bekor qilindi. Qaytadan: /addfaq")
+        await state.clear()
+        return
+    await state.clear()
+    async with SessionLocal() as session:
+        item = await add_faq(session, question, answer, photo_file_id)
+        await session.commit()
+        fid = item.id
+    extra = " (📷 rasm bilan)" if photo_file_id else ""
+    await message.answer(
+        f"✅ Saqlandi (#{fid}){extra}. Endi bot shunga o'xshash savollarga o'zi javob beradi.\n"
+        "Ro'yxat: /faq"
+    )
+
+
+@router.message(Command("delfaq"))
+async def cmd_delfaq(message: Message, command: CommandObject) -> None:
+    if not _is_admin(message):
+        return
+    raw = (command.args or "").strip().lstrip("#")
+    if not raw.isdigit():
+        await message.answer("Format: /delfaq <raqam>. Raqamni /faq ro'yxatidan oling.")
+        return
+    async with SessionLocal() as session:
+        ok = await del_faq(session, int(raw))
+        await session.commit()
+    await message.answer("✅ O'chirildi." if ok else "Bunday savol topilmadi.")
 
 
 @router.message(Command("bindgroup"))

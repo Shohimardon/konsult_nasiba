@@ -158,3 +158,18 @@ class Setting(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(Text, default="")
+
+
+class FaqItem(Base):
+    """Частый вопрос + эталонный ответ. Админ добавляет через /addfaq.
+    Все записи идут в базу знаний ИИ — так у бота «богаче словарь» и он отвечает сам."""
+
+    __tablename__ = "faq_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    question: Mapped[str] = mapped_column(Text)
+    answer: Mapped[str] = mapped_column(Text, default="")
+    # Необязательный скрин/фото к ответу (Telegram file_id). Бот приложит картинку,
+    # когда вопрос педагога совпадёт с этим FAQ.
+    photo_file_id: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
